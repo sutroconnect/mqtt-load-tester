@@ -2,12 +2,13 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/GaryBoone/GoStats/stats"
-
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -77,25 +78,72 @@ func (c *Client) Run(res chan *RunResults) {
 }
 
 func (c *Client) genMessages(ch chan *Message, done chan bool) {
-	var payload interface{}
-	// set payload if specified
+	var payloads []string
+
+	// Parse comma-separated JSON payloads
 	if c.MsgPayload != "" {
-		payload = c.MsgPayload
+		payloads = parseJSONPayloads(c.MsgPayload)
 	} else {
-		payload = make([]byte, c.MsgSize)
+		// Default payload if MsgPayload is not provided
+		payloads = []string{string(make([]byte, c.MsgSize))}
 	}
 
 	for i := 0; i < c.MsgCount; i++ {
+		// Select a random payload from the slice
+		randomPayload := payloads[rand.Intn(len(payloads))]
+
 		ch <- &Message{
 			Topic:   c.MsgTopic,
 			QoS:     c.MsgQoS,
-			Payload: payload,
+			Payload: randomPayload,
 		}
 		time.Sleep(time.Duration(c.MessageInterval) * time.Second)
 	}
 
 	done <- true
-	// log.Printf("CLIENT %v is done generating messages\n", c.ID)
+}
+
+// Parse comma-separated JSON payloads into a slice of strings
+func parseJSONPayloads(payload string) []string {
+	var payloads []string
+	payloadList := splitPayloads(payload)
+
+	for _, p := range payloadList {
+		var validJSON bool
+		var jsonPayload map[string]interface{}
+
+		err := json.Unmarshal([]byte(p), &jsonPayload)
+		if err == nil {
+			validJSON = true
+		}
+
+		if validJSON {
+			payloads = append(payloads, p)
+		} else {
+			log.Printf("Invalid JSON payload: %s\n", p)
+		}
+	}
+
+	return payloads
+}
+
+// Split comma-separated payloads into a slice
+func splitPayloads(payload string) []string {
+	payloadList := []string{}
+	payloads := []rune(payload)
+	start := 0
+
+	for i, char := range payloads {
+		if char == ',' {
+			payloadList = append(payloadList, string(payloads[start:i]))
+			start = i + 1
+		}
+	}
+
+	// Add the last payload
+	payloadList = append(payloadList, string(payloads[start:]))
+
+	return payloadList
 }
 
 func (c *Client) pubMessages(in, out chan *Message, doneGen, donePub chan bool) {

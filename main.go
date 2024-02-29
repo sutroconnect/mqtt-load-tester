@@ -106,6 +106,19 @@ func main() {
 	resCh := make(chan *RunResults)
 	start := time.Now()
 	sleepTime := float64(*rampUpTimeInSec) / float64(*clients)
+
+	if *payload != "" {
+		payloads := parseJSONPayloads(*payload)
+
+		log.Println("Parsed Payloads:\n")
+
+		for _, payload := range payloads {
+			log.Println(payload, "\n\n")
+    	}
+	}
+
+	log.Println("Attempting to start clients... ")
+
 	for i := 0; i < *clients; i++ {
 		if !*quiet {
 			log.Println("Starting client ", i)
@@ -129,6 +142,8 @@ func main() {
 		go c.Run(resCh)
 		time.Sleep(time.Duration(sleepTime*1000) * time.Millisecond)
 	}
+
+	log.Println("Clients started. Attempting to send messages... ")
 
 	// collect the results
 	results := make([]*RunResults, *clients)

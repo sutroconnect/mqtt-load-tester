@@ -1,4 +1,4 @@
-module github.com/krylovsk/mqtt-benchmark
+module github.com/sutroconnect/mqtt-load-tester
 
 go 1.18
 

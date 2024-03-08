@@ -72,7 +72,7 @@ func main() {
 		clients              = flag.Int("clients", 10, "Number of clients to start")
 		format               = flag.String("format", "text", "Output format: text|json")
 		quiet                = flag.Bool("quiet", false, "Suppress logs while running")
-		clientPrefix         = flag.String("client-prefix", "mqtt-benchmark", "MQTT client id prefix (suffixed with '-<client-num>'")
+		clientPrefix         = flag.String("client-prefix", "mqtt-load-tester", "MQTT client id prefix (suffixed with '-<client-num>'")
 		clientCert           = flag.String("client-cert", "", "Path to client certificate in PEM format")
 		clientKey            = flag.String("client-key", "", "Path to private clientKey in PEM format")
 		brokerCaCert         = flag.String("broker-ca-cert", "", "Path to broker CA certificate in PEM format")

@@ -110,10 +110,10 @@ func main() {
 	if *payload != "" {
 		payloads := parseJSONPayloads(*payload)
 
-		log.Println("Parsed Payloads:\n")
+		log.Println("Parsed Payloads:")
 
 		for _, payload := range payloads {
-			log.Println(payload, "\n\n")
+			log.Println(payload)
     	}
 	}
 

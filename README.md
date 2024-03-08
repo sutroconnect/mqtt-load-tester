@@ -1,19 +1,18 @@
-MQTT benchmarking tool
-=========
+# MQTT Load Tester
 
-A simple MQTT (broker) benchmarking tool.
+A simple MQTT load testing tool.
 
 Installation:
 
 ```sh
-go install github.com/krylovsk/mqtt-benchmark@main
+go install github.com/sutroconnect/mqtt-load-tester@main
 ```
 
 The tool supports multiple concurrent clients, configurable message size, etc:
 
 ```sh
-$ ./mqtt-benchmark -h
-Usage of ./mqtt-benchmark:
+$ ./mqtt-load-tester -h
+Usage of ./mqtt-load-tester:
   -broker string
     	MQTT broker endpoint as scheme://host:port (default "tcp://localhost:1883")
   -broker-ca-cert string
@@ -23,7 +22,7 @@ Usage of ./mqtt-benchmark:
   -client-key string
     	Path to private clientKey in PEM format
   -client-prefix string
-    	MQTT client id prefix (suffixed with '-<client-num>' (default "mqtt-benchmark")
+    	MQTT client id prefix (suffixed with '-<client-num>' (default "mqtt-load-tester")
   -clients int
     	Number of clients to start (default 10)
   -count int
@@ -58,10 +57,55 @@ Usage of ./mqtt-benchmark:
 
 Two output formats supported: human-readable plain text and JSON.
 
-Example use and output:
+## Modifications for Sutro's Use Case
+
+To facilitate load testing, all that's been changed is adding the option for multiple payloads, separated by `^` (because `,` is already used in JSON and I was in a hurry). If multiple payloads are specified (see example of how to do this below), then the script will parse them into a list and randomly alternate between the payloads.
+
+To specify multiple payloads, which the clients will randomly alternate between, run the command like so:
 
 ```sh
-> mqtt-benchmark --broker tcp://broker.local:1883 --count 100 --size 100 --clients 100 --qos 2 --format text
+> mqtt-load-tester --broker tcp://broker.local:1883 --count 100 --clients 10 --qos 1 --topic house/bedroom/temperature --payload "{\"payload1\":true}^{\"payload2\":true}"
+
+...
+
+2024/03/08 12:29:00 Parsed Payloads:
+2024/03/08 12:29:00 {"payload1":true}
+2024/03/08 12:29:00 {"payload2":true}
+
+...
+```
+
+## Suggested Use
+
+To direct load testing messages to their own SQS queue, you can create an AWS IoT rule with a query that targets messages like `$aws/things/hub/loadtest/id:id:id:id/hub2aws`. Notice the `/loadtest/` section of the topic.
+
+The rule might look something like this:
+
+```sql
+SELECT topic(5) as hub_id, parse_time("yyyyMMdd-HHmmss z", timestamp() ) as aws_timestamp, * from '$aws/things/hub/loadtest/+/hub2aws'
+```
+
+It would then forward messages to the desired queue, which the load testing environment would be configured to pull from.
+
+```sh
+go run . \
+    --broker tls://broker-address.iot.us-east-2.amazonaws.com:8883 \
+    --username "load-tester" \
+    --count 9000000 \
+    --clients 10 \
+    --qos 0 \
+    --message-interval 0 \
+    --topic "\$aws/things/hub/loadtest/1234:1234:1234:1234/hub2aws" \
+    --payload "{\"newBattStatus\":\"charging\",\"oldBattStatus\":\"complete\",\"timeStamp\":\"20240101-000000\",\"aws_timestamp\":\"20240101-000000 UTC\"}^{\"newBattStatus\":\"complete\",\"oldBattStatus\":\"charging\",\"timeStamp\":\"20240101-000000\",\"aws_timestamp\":\"20240101-000000 UTC\"}^{\"fullReading\":\"fullReadingData",\"hub_id\":\"1234:1234:1234:1234\",\"id\":\"5678:5678:5678:5678\",\"timeStamp\":\"20240101-000000\",\"aws_timestamp\":\"20240101-000000 UTC\"}" \
+    --broker-ca-cert path/to/mqtt_broker_certs/root-ca.pem \
+    --client-cert path/to/mqtt_broker_certs/certificate.pem.crt \
+    --client-key path/to/mqtt_broker_certs/private.pem.key \
+```
+
+## General Use and Output
+
+```sh
+> mqtt-load-tester --broker tcp://broker.local:1883 --count 100 --size 100 --clients 100 --qos 2 --format text
 ....
 
 ======= CLIENT 27 =======
@@ -88,7 +132,7 @@ Total Bandwidth (msg/sec):   676.112
 With payload specified:
 
 ```sh
-> mqtt-benchmark --broker tcp://broker.local:1883 --count 100 --clients 10 --qos 1 --topic house/bedroom/temperature --payload {\"temperature\":20,\"timeStamp\":1597314150}
+> mqtt-load-tester --broker tcp://broker.local:1883 --count 100 --clients 10 --qos 1 --topic house/bedroom/temperature --payload {\"temperature\":20,\"timeStamp\":1597314150}
 ....
 
 ======= CLIENT 0 =======
@@ -115,7 +159,7 @@ Total Bandwidth (msg/sec):   137.839
 Similarly, in JSON:
 
 ```json
-> mqtt-benchmark --broker tcp://broker.local:1883 --count 100 --size 100 --clients 100 --qos 2 --format json --quiet
+> mqtt-load-tester --broker tcp://broker.local:1883 --count 100 --size 100 --clients 100 --qos 2 --format json --quiet
 {
     runs: [
         ...

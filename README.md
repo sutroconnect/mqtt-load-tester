@@ -158,34 +158,36 @@ Total Bandwidth (msg/sec):   137.839
 
 Similarly, in JSON:
 
+```sh
+mqtt-load-tester --broker tcp://broker.local:1883 --count 100 --size 100 --clients 100 --qos 2 --format json --quiet
+```
+
 ```json
-> mqtt-load-tester --broker tcp://broker.local:1883 --count 100 --size 100 --clients 100 --qos 2 --format json --quiet
 {
-    runs: [
-        ...
-        {
-            "id": 61,
-            "successes": 100,
-            "failures": 0,
-            "run_time": 16.142762197,
-            "msg_tim_min": 12.798859,
-            "msg_time_max": 1273.9553740000001,
-            "msg_time_mean": 147.66799521,
-            "msg_time_std": 152.08244221156286,
-            "msgs_per_sec": 6.194726700402251
-        }
-    ],
-    "totals": {
-        "successes": 10000,
-        "failures": 0,
-        "total_run_time": 16.153741746,
-        "avg_run_time": 15.14702422494,
-        "msg_time_min": 7.852086000000001,
-        "msg_time_max": 1285.241845,
-        "msg_time_mean_avg": 136.4360292677,
-        "msg_time_mean_std": 12.816965054355633,
-        "total_msgs_per_sec": 681.0374046459865,
-        "avg_msgs_per_sec": 6.810374046459865
+  "runs": [
+    {
+      "id": 61,
+      "successes": 100,
+      "failures": 0,
+      "run_time": 16.142762197,
+      "msg_tim_min": 12.798859,
+      "msg_time_max": 1273.9553740000001,
+      "msg_time_mean": 147.66799521,
+      "msg_time_std": 152.08244221156286,
+      "msgs_per_sec": 6.194726700402251
     }
+  ],
+  "totals": {
+    "successes": 10000,
+    "failures": 0,
+    "total_run_time": 16.153741746,
+    "avg_run_time": 15.14702422494,
+    "msg_time_min": 7.852086000000001,
+    "msg_time_max": 1285.241845,
+    "msg_time_mean_avg": 136.4360292677,
+    "msg_time_mean_std": 12.816965054355633,
+    "total_msgs_per_sec": 681.0374046459865,
+    "avg_msgs_per_sec": 6.810374046459865
+  }
 }
 ```

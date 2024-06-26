@@ -127,14 +127,14 @@ func parseJSONPayloads(payload string) []string {
 	return payloads
 }
 
-// Split comma-separated payloads into a slice
+// Split caret-separated (^) payloads into a slice
 func splitPayloads(payload string) []string {
 	payloadList := []string{}
 	payloads := []rune(payload)
 	start := 0
 
 	for i, char := range payloads {
-		if char == ',' {
+		if char == '^' {
 			payloadList = append(payloadList, string(payloads[start:i]))
 			start = i + 1
 		}
